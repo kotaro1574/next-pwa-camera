@@ -1,39 +1,38 @@
-import Link from "next/link"
+"use client"
 
-import { siteConfig } from "@/config/site"
-import { buttonVariants } from "@/components/ui/button"
+import { useRef, useState } from "react"
+import Image from "next/image"
+import { CameraType } from "react-camera-pro"
+
+import { Button } from "@/components/ui/button"
+import Camera from "@/components/camera"
 
 export default function IndexPage() {
+  const cameraRef = useRef<CameraType>(null)
+  const [image, setImage] = useState<string | null>(null)
+
+  const handleTakePhoto = () => {
+    if (!cameraRef.current) return
+    const imageSrc = cameraRef.current.takePhoto()
+
+    if (typeof imageSrc !== "string") return
+
+    setImage(imageSrc)
+  }
+
   return (
     <section className="container grid items-center gap-6 pb-8 pt-6 md:py-10">
-      <div className="flex max-w-[980px] flex-col items-start gap-2">
-        <h1 className="text-3xl font-extrabold leading-tight tracking-tighter md:text-4xl">
-          Beautifully designed components <br className="hidden sm:inline" />
-          built with Radix UI and Tailwind CSS.
-        </h1>
-        <p className="max-w-[700px] text-lg text-muted-foreground">
-          Accessible and customizable components that you can copy and paste
-          into your apps. Free. Open Source. And Next.js 13 Ready.
-        </p>
+      <div
+        style={{
+          height: "calc(100vh - 240px)",
+        }}
+      >
+        <Camera cameraRef={cameraRef} />
       </div>
-      <div className="flex gap-4">
-        <Link
-          href={siteConfig.links.docs}
-          target="_blank"
-          rel="noreferrer"
-          className={buttonVariants()}
-        >
-          Documentation
-        </Link>
-        <Link
-          target="_blank"
-          rel="noreferrer"
-          href={siteConfig.links.github}
-          className={buttonVariants({ variant: "outline" })}
-        >
-          GitHub
-        </Link>
-      </div>
+      <Button onClick={handleTakePhoto}>Take photo</Button>
+      {image && (
+        <Image src={image} alt="Taken photo" width={200} height={500} />
+      )}
     </section>
   )
 }
