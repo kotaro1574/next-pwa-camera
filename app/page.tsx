@@ -3,13 +3,22 @@
 import { useRef, useState } from "react"
 import Image from "next/image"
 import { CameraType } from "react-camera-pro"
+import { FacingMode } from "react-camera-pro/dist/components/Camera/types"
 
 import { Button } from "@/components/ui/button"
 import Camera from "@/components/camera"
 
 export default function IndexPage() {
   const cameraRef = useRef<CameraType>(null)
+  const [facingMode, setFacingMode] = useState<FacingMode>("user")
   const [image, setImage] = useState<string | null>(null)
+
+  const onSwitchCamera = () => {
+    if (cameraRef.current) {
+      setFacingMode((prev) => (prev === "user" ? "environment" : "user"))
+      cameraRef.current.switchCamera()
+    }
+  }
 
   const handleTakePhoto = () => {
     if (!cameraRef.current) return
@@ -27,8 +36,9 @@ export default function IndexPage() {
           height: "calc(100vh - 240px)",
         }}
       >
-        <Camera cameraRef={cameraRef} />
+        <Camera cameraRef={cameraRef} facingMode={facingMode} />
       </div>
+      <Button onClick={onSwitchCamera}>Switch camera</Button>
       <Button onClick={handleTakePhoto}>Take photo</Button>
       {image && (
         <Image src={image} alt="Taken photo" width={200} height={500} />
