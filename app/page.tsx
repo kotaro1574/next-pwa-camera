@@ -13,8 +13,28 @@ export default function IndexPage() {
   const [facingMode, setFacingMode] = useState<FacingMode>("user")
   const [image, setImage] = useState<string | null>(null)
   const [isChangingCamera, setIsChangingCamera] = useState(false)
+  const [key, setKey] = useState(0) // カメラコンポーネントを強制的に再マウントするためのキー
+
+  // カメラ切り替え処理が完了しない場合のタイムアウト処理
+  useEffect(() => {
+    let timeoutId: NodeJS.Timeout | null = null
+
+    if (isChangingCamera) {
+      // 最大10秒後に強制的にリセット
+      timeoutId = setTimeout(() => {
+        console.log("カメラ切り替えタイムアウト: 強制リセット")
+        setIsChangingCamera(false)
+      }, 10000)
+    }
+
+    return () => {
+      if (timeoutId) clearTimeout(timeoutId)
+    }
+  }, [isChangingCamera])
 
   const onSwitchCamera = () => {
+    if (isChangingCamera) return // 既に切り替え中なら何もしない
+
     // カメラ切り替え中のフラグを設定
     setIsChangingCamera(true)
 
@@ -22,22 +42,19 @@ export default function IndexPage() {
     const newFacingMode = facingMode === "user" ? "environment" : "user"
     setFacingMode(newFacingMode)
 
-    // カメラの切り替えを遅延させる
-    setTimeout(() => {
-      if (cameraRef.current) {
-        try {
-          // switchCameraを呼び出す
-          cameraRef.current.switchCamera()
-        } catch (error) {
-          console.error("カメラ切り替えエラー:", error)
-        } finally {
-          // 処理完了後にフラグをリセット
-          setTimeout(() => {
-            setIsChangingCamera(false)
-          }, 500)
-        }
-      }
-    }, 500)
+    try {
+      // カメラコンポーネントを強制的に再マウント
+      setKey((prevKey) => prevKey + 1)
+
+      // 一定時間後にカメラ切り替え完了とする
+      setTimeout(() => {
+        setIsChangingCamera(false)
+      }, 2000)
+    } catch (error) {
+      console.error("カメラ切り替えエラー:", error)
+      // エラー発生時も必ずフラグをリセット
+      setIsChangingCamera(false)
+    }
   }
 
   const handleTakePhoto = () => {
@@ -56,9 +73,7 @@ export default function IndexPage() {
           height: "calc(100vh - 240px)",
         }}
       >
-        {!isChangingCamera && (
-          <Camera cameraRef={cameraRef} facingMode={facingMode} />
-        )}
+        <Camera key={key} cameraRef={cameraRef} facingMode={facingMode} />
       </div>
       <Button onClick={onSwitchCamera} disabled={isChangingCamera}>
         {isChangingCamera ? "カメラ切り替え中..." : "Switch camera"}
