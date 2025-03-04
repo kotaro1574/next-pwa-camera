@@ -1,6 +1,6 @@
 "use client"
 
-import { useEffect, useRef, useState } from "react"
+import { useRef, useState } from "react"
 import Image from "next/image"
 import { CameraType } from "react-camera-pro"
 import { FacingMode } from "react-camera-pro/dist/components/Camera/types"
@@ -14,51 +14,6 @@ export default function IndexPage() {
   const [image, setImage] = useState<string | null>(null)
   const [isChangingCamera, setIsChangingCamera] = useState(false)
   const [key, setKey] = useState(0) // カメラコンポーネントを強制的に再マウントするためのキー
-  const [isVisible, setIsVisible] = useState(true) // ページの可視性状態を追跡
-
-  // ページの可視性変更を検出
-  useEffect(() => {
-    const handleVisibilityChange = () => {
-      const isDocumentVisible = document.visibilityState === "visible"
-      console.log("Visibility changed:", isDocumentVisible)
-
-      if (isDocumentVisible && !isVisible) {
-        // ページが非表示から表示に変わった場合、カメラを再初期化
-        console.log("Page became visible, reinitializing camera")
-        setKey((prevKey) => prevKey + 1)
-      }
-
-      setIsVisible(isDocumentVisible)
-    }
-
-    // 初期状態を設定
-    setIsVisible(document.visibilityState === "visible")
-
-    // イベントリスナーを追加
-    document.addEventListener("visibilitychange", handleVisibilityChange)
-
-    return () => {
-      // クリーンアップ
-      document.removeEventListener("visibilitychange", handleVisibilityChange)
-    }
-  }, [isVisible])
-
-  // カメラ切り替え処理が完了しない場合のタイムアウト処理
-  useEffect(() => {
-    let timeoutId: NodeJS.Timeout | null = null
-
-    if (isChangingCamera) {
-      // 最大10秒後に強制的にリセット
-      timeoutId = setTimeout(() => {
-        console.log("カメラ切り替えタイムアウト: 強制リセット")
-        setIsChangingCamera(false)
-      }, 10000)
-    }
-
-    return () => {
-      if (timeoutId) clearTimeout(timeoutId)
-    }
-  }, [isChangingCamera])
 
   const onSwitchCamera = () => {
     if (isChangingCamera) return // 既に切り替え中なら何もしない
@@ -95,25 +50,18 @@ export default function IndexPage() {
 
   return (
     <section className="container grid items-center gap-6 pb-8 pt-6 md:py-10">
+      <h1>react-camera-pro</h1>
       <div
         style={{
           height: "calc(100vh - 240px)",
         }}
       >
-        {isVisible && (
-          <Camera key={key} cameraRef={cameraRef} facingMode={facingMode} />
-        )}
+        <Camera key={key} cameraRef={cameraRef} facingMode={facingMode} />
       </div>
-      <Button
-        onClick={onSwitchCamera}
-        disabled={isChangingCamera || !isVisible}
-      >
+      <Button onClick={onSwitchCamera} disabled={isChangingCamera}>
         {isChangingCamera ? "カメラ切り替え中..." : "Switch camera"}
       </Button>
-      <Button
-        onClick={handleTakePhoto}
-        disabled={isChangingCamera || !isVisible}
-      >
+      <Button onClick={handleTakePhoto} disabled={isChangingCamera}>
         Take photo
       </Button>
       {image && (
