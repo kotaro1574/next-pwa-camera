@@ -43,11 +43,10 @@ export default function IndexPage() {
     setFacingMode(newFacingMode)
 
     try {
-      // カメラコンポーネントを強制的に再マウント
-      setKey((prevKey) => prevKey + 1)
-
-      // 一定時間後にカメラ切り替え完了とする
       setTimeout(() => {
+        // カメラコンポーネントを強制的に再マウント
+        setKey((prevKey) => prevKey + 1)
+        // 一定時間後にカメラ切り替え完了とする
         setIsChangingCamera(false)
       }, 2000)
     } catch (error) {
