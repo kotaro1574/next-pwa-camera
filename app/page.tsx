@@ -15,8 +15,14 @@ export default function IndexPage() {
 
   const onSwitchCamera = () => {
     if (cameraRef.current) {
-      setFacingMode((prev) => (prev === "user" ? "environment" : "user"))
-      cameraRef.current.switchCamera()
+      const newFacingMode = facingMode === "user" ? "environment" : "user"
+      setFacingMode(newFacingMode)
+
+      setTimeout(() => {
+        if (cameraRef.current) {
+          cameraRef.current.switchCamera()
+        }
+      }, 300)
     }
   }
 
