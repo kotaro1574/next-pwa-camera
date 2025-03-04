@@ -14,16 +14,12 @@ export default function IndexPage() {
   const [image, setImage] = useState<string | null>(null)
 
   const onSwitchCamera = () => {
-    if (cameraRef.current) {
-      const newFacingMode = facingMode === "user" ? "environment" : "user"
-      setFacingMode(newFacingMode)
-
-      setTimeout(() => {
-        if (cameraRef.current) {
-          cameraRef.current.switchCamera()
-        }
-      }, 300)
-    }
+    setTimeout(() => {
+      if (cameraRef.current) {
+        const facingMode = cameraRef.current.switchCamera()
+        setFacingMode(facingMode)
+      }
+    }, 300)
   }
 
   const handleTakePhoto = () => {
