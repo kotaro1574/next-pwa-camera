@@ -9,10 +9,10 @@ export const siteConfig = {
       title: "pro",
       href: "/",
     },
-    {
-      title: "webcam",
-      href: "/webcam",
-    },
+    // {
+    //   title: "webcam",
+    //   href: "/webcam",
+    // },
   ],
   links: {
     twitter: "https://twitter.com/shadcn",
