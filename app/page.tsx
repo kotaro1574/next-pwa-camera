@@ -14,6 +14,34 @@ export default function IndexPage() {
   const [image, setImage] = useState<string | null>(null)
   const [isChangingCamera, setIsChangingCamera] = useState(false)
   const [key, setKey] = useState(0) // カメラコンポーネントを強制的に再マウントするためのキー
+  const [isVisible, setIsVisible] = useState(true) // ページの可視性状態を追跡
+
+  // ページの可視性変更を検出
+  useEffect(() => {
+    const handleVisibilityChange = () => {
+      const isDocumentVisible = document.visibilityState === "visible"
+      console.log("Visibility changed:", isDocumentVisible)
+
+      if (isDocumentVisible && !isVisible) {
+        // ページが非表示から表示に変わった場合、カメラを再初期化
+        console.log("Page became visible, reinitializing camera")
+        setKey((prevKey) => prevKey + 1)
+      }
+
+      setIsVisible(isDocumentVisible)
+    }
+
+    // 初期状態を設定
+    setIsVisible(document.visibilityState === "visible")
+
+    // イベントリスナーを追加
+    document.addEventListener("visibilitychange", handleVisibilityChange)
+
+    return () => {
+      // クリーンアップ
+      document.removeEventListener("visibilitychange", handleVisibilityChange)
+    }
+  }, [isVisible])
 
   // カメラ切り替え処理が完了しない場合のタイムアウト処理
   useEffect(() => {
@@ -43,10 +71,11 @@ export default function IndexPage() {
     setFacingMode(newFacingMode)
 
     try {
+      // カメラコンポーネントを強制的に再マウント
+      setKey((prevKey) => prevKey + 1)
+
+      // 一定時間後にカメラ切り替え完了とする
       setTimeout(() => {
-        // カメラコンポーネントを強制的に再マウント
-        setKey((prevKey) => prevKey + 1)
-        // 一定時間後にカメラ切り替え完了とする
         setIsChangingCamera(false)
       }, 2000)
     } catch (error) {
@@ -72,12 +101,20 @@ export default function IndexPage() {
           height: "calc(100vh - 240px)",
         }}
       >
-        <Camera key={key} cameraRef={cameraRef} facingMode={facingMode} />
+        {isVisible && (
+          <Camera key={key} cameraRef={cameraRef} facingMode={facingMode} />
+        )}
       </div>
-      <Button onClick={onSwitchCamera} disabled={isChangingCamera}>
+      <Button
+        onClick={onSwitchCamera}
+        disabled={isChangingCamera || !isVisible}
+      >
         {isChangingCamera ? "カメラ切り替え中..." : "Switch camera"}
       </Button>
-      <Button onClick={handleTakePhoto} disabled={isChangingCamera}>
+      <Button
+        onClick={handleTakePhoto}
+        disabled={isChangingCamera || !isVisible}
+      >
         Take photo
       </Button>
       {image && (
