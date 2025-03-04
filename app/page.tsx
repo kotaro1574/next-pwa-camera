@@ -1,6 +1,7 @@
+// app/page.tsx のカメラリソース解放部分の修正
 "use client"
 
-import { useRef, useState } from "react"
+import { useEffect, useRef, useState } from "react"
 import Image from "next/image"
 import { CameraType } from "react-camera-pro"
 import { FacingMode } from "react-camera-pro/dist/components/Camera/types"
@@ -15,11 +16,27 @@ export default function IndexPage() {
   const [isChangingCamera, setIsChangingCamera] = useState(false)
   const [key, setKey] = useState(0) // カメラコンポーネントを強制的に再マウントするためのキー
 
+  // コンポーネントのアンマウント時にカメラリソースを解放
+  useEffect(() => {
+    return () => {
+      // react-camera-proではCameraTypeにstopメソッドが直接実装されていないため、
+      // コンポーネントのアンマウント時はkeyの変更で強制的に再マウントさせる方法や
+      // Cameraコンポーネント側でのリソース解放に依存する
+      console.log("カメラコンポーネントのアンマウント")
+
+      // Cameraコンポーネントをアンマウントして再マウントさせるためにkeyを更新
+      setKey((prev) => prev + 999)
+    }
+  }, [])
+
   const onSwitchCamera = () => {
     if (isChangingCamera) return // 既に切り替え中なら何もしない
 
     // カメラ切り替え中のフラグを設定
     setIsChangingCamera(true)
+
+    // 既存のカメラストリームを停止する直接的な方法はないため、
+    // コンポーネントの再マウントによるリソース解放に依存
 
     // 新しいfacingModeを設定
     const newFacingMode = facingMode === "user" ? "environment" : "user"

@@ -1,6 +1,6 @@
 "use client"
 
-import { useCallback, useRef, useState } from "react"
+import { useCallback, useEffect, useRef, useState } from "react"
 import Image from "next/image"
 import Webcam from "react-webcam"
 
@@ -8,10 +8,34 @@ import { Button } from "@/components/ui/button"
 
 export default function WebcamPage() {
   const webcamRef = useRef<Webcam>(null)
+  const streamRef = useRef<MediaStream | null>(null)
   const [facingMode, setFacingMode] = useState<"user" | "environment">("user")
   const [isSwitchingCamera, setIsSwitchingCamera] = useState(false)
   const [image, setImage] = useState<string | null>(null)
   const [key, setKey] = useState(0)
+
+  // コンポーネントのアンマウント時にカメラリソースを解放
+  useEffect(() => {
+    return () => {
+      // MediaStreamの取得とトラックの停止
+      if (webcamRef.current && webcamRef.current.video) {
+        const video = webcamRef.current.video
+        const stream = video.srcObject as MediaStream
+        if (stream) {
+          const tracks = stream.getTracks()
+          tracks.forEach((track) => track.stop())
+          video.srcObject = null
+        }
+      }
+
+      // streamRefに保存されているStreamがあれば停止
+      if (streamRef.current) {
+        const tracks = streamRef.current.getTracks()
+        tracks.forEach((track) => track.stop())
+        streamRef.current = null
+      }
+    }
+  }, [])
 
   // カメラの切り替え
   const switchCamera = useCallback(() => {
@@ -19,6 +43,17 @@ export default function WebcamPage() {
 
     try {
       setIsSwitchingCamera(true)
+
+      // 現在のストリームがあれば停止
+      if (webcamRef.current && webcamRef.current.video) {
+        const video = webcamRef.current.video
+        const stream = video.srcObject as MediaStream
+        if (stream) {
+          const tracks = stream.getTracks()
+          tracks.forEach((track) => track.stop())
+        }
+      }
+
       const newMode = facingMode === "user" ? "environment" : "user"
       console.log(`カメラを切り替えます: ${facingMode} → ${newMode}`)
       setFacingMode(newMode)
@@ -35,6 +70,12 @@ export default function WebcamPage() {
       setIsSwitchingCamera(false)
     }
   }, [facingMode, isSwitchingCamera])
+
+  // ストリーム取得成功時の処理を追加
+  const handleUserMedia = useCallback((stream: MediaStream) => {
+    streamRef.current = stream
+    console.log("カメラストリーム取得成功")
+  }, [])
 
   // 写真撮影
   const capturePhoto = useCallback(() => {
@@ -78,6 +119,7 @@ export default function WebcamPage() {
           screenshotQuality={0.92}
           forceScreenshotSourceSize
           mirrored={facingMode === "user"}
+          onUserMedia={handleUserMedia}
           onUserMediaError={(err) => {
             console.error("カメラアクセスエラー:", err)
             setIsSwitchingCamera(false)
